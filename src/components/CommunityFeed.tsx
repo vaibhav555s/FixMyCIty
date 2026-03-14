@@ -74,8 +74,8 @@ const CommunityFeed = () => {
             // Get location from address
             location: extractLocation(
               data.location?.displayAddress ||
-                data.location?.address ||
-                "Unknown Location"
+              data.location?.address ||
+              "Unknown Location"
             ),
             // Determine status display
             statusDisplay: getStatusDisplay(data.status || "pending"),
@@ -229,27 +229,28 @@ const CommunityFeed = () => {
   }
 
   return (
-    <section className="px-4 pt-6 pb-12">
+    <section style={{ background: '#0F0F13', minHeight: '100%', fontFamily: "'Inter', sans-serif" }} className="px-4 pt-6 pb-6">
       <div className="max-w-lg mx-auto">
         {/* Page Header */}
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-h2 font-semibold text-accent">Community Feed</h1>
-          <button className="p-2 hover:bg-subtle rounded-lg transition-colors">
-            <Search className="w-5 h-5 text-text-secondary" />
+          <h1 className="text-[2rem] font-black text-white" style={{ letterSpacing: '-0.04em' }}>Community Feed</h1>
+          <button className="p-2.5 rounded-full transition-colors" style={{ background: '#1C1C24' }}>
+            <Search className="w-5 h-5 text-zinc-400" />
           </button>
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex space-x-2 mb-6 overflow-x-auto">
+        <div className="flex space-x-2 mb-6 overflow-x-auto pb-1 scrollbar-hide">
           {filters.map((filter) => (
             <button
               key={filter.id}
               onClick={() => setActiveFilter(filter.id)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors duration-200 ${
+              className={`px-4 py-2 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all duration-200 ${
                 activeFilter === filter.id
-                  ? "bg-accent text-white"
-                  : "bg-subtle text-text-secondary hover:bg-borders"
+                  ? 'text-white'
+                  : 'text-zinc-500 hover:text-zinc-300'
               }`}
+              style={activeFilter === filter.id ? { background: '#7C6FFF' } : { background: '#1C1C24' }}
             >
               {filter.label}
             </button>
@@ -267,8 +268,8 @@ const CommunityFeed = () => {
               {activeFilter === "pending"
                 ? "No pending issues in your area"
                 : activeFilter === "resolved"
-                ? "No resolved issues to show"
-                : "Be the first to report a civic issue!"}
+                  ? "No resolved issues to show"
+                  : "Be the first to report a civic issue!"}
             </p>
           </div>
         ) : (
@@ -276,118 +277,70 @@ const CommunityFeed = () => {
             {feedItems.map((item) => (
               <div
                 key={item.id}
-                className="bg-surface border border-borders rounded-2xl overflow-hidden card-hover"
+                className="overflow-hidden rounded-2xl"
+                style={{ background: '#1C1C24' }}
               >
                 {/* Card Header */}
                 <div className="flex items-center justify-between p-4">
                   <div className="flex items-center">
-                    <div className="w-8 h-8 bg-subtle rounded-full flex items-center justify-center mr-3">
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center mr-3" style={{ background: '#2A2A35' }}>
                       <span className="text-sm">👤</span>
                     </div>
                     <div>
-                      <div className="text-sm font-medium text-accent">
+                      <div className="text-[15px] font-semibold text-white tracking-tight leading-none mb-1">
                         {item.userDisplayName || "Anonymous Citizen"}
                       </div>
-                      <div className="text-xs text-text-secondary">
+                      <div className="text-[12px] font-medium text-zinc-500 tracking-tight">
                         📍 {item.location} • {item.timeAgo}
                       </div>
                     </div>
                   </div>
-                  <div
-                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${item.categoryInfo.color}`}
-                  >
-                    {item.categoryInfo.icon} {item.categoryInfo.label}
+                  <div className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase ${item.categoryInfo.color}`}>
+                    {item.categoryInfo.icon} <span className="ml-1">{item.categoryInfo.label}</span>
                   </div>
                 </div>
 
                 {/* Issue Image */}
-                <div className="px-4 pb-3">
-                  <div className="w-full h-48 bg-subtle rounded-xl flex items-center justify-center overflow-hidden">
+                <div className="px-4 pb-4">
+                  <div className="w-full h-48 rounded-xl flex items-center justify-center overflow-hidden relative" style={{ background: '#2A2A35' }}>
                     {item.imageUrls && item.imageUrls.length > 0 ? (
-                      <img
-                        src={item.imageUrls[0]}
-                        alt={item.title}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          // Fallback to emoji if image fails to load
-                          e.target.style.display = "none";
-                          e.target.nextSibling.style.display = "flex";
-                        }}
-                      />
+                      <img src={item.imageUrls[0]} alt={item.title} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                     ) : null}
-                    <div
-                      className="w-full h-full flex items-center justify-center"
-                      style={{
-                        display:
-                          item.imageUrls && item.imageUrls.length > 0
-                            ? "none"
-                            : "flex",
-                      }}
-                    >
-                      <span className="text-4xl">
-                        {getDefaultEmoji(item.category)}
-                      </span>
-                    </div>
+                    {(!item.imageUrls || item.imageUrls.length === 0) && (
+                      <span className="text-5xl opacity-60">{getDefaultEmoji(item.category)}</span>
+                    )}
                   </div>
                 </div>
 
                 {/* Content */}
                 <div className="px-4 pb-4">
-                  <p className="text-sm text-accent mb-3 font-medium">
-                    {item.title}
-                  </p>
+                  <h3 className="text-[17px] font-semibold text-white mb-2 tracking-tight leading-snug">{item.title}</h3>
                   {item.description && (
-                    <p className="text-xs text-text-secondary mb-3 line-clamp-2">
-                      {item.description}
-                    </p>
+                    <p className="text-[14px] text-zinc-500 mb-4 line-clamp-2 leading-relaxed">{item.description}</p>
                   )}
 
                   {/* Actions */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      {/* Upvote Button */}
+                  <div className="flex items-center justify-between pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                    <div className="flex items-center space-x-2">
                       <button
                         onClick={() => handleUpvote(item.id, item.hasUpvoted)}
-                        className={`flex items-center space-x-1 hover:bg-subtle rounded-lg px-2 py-1 transition-colors ${
-                          item.hasUpvoted
-                            ? "text-red-500"
-                            : "text-text-secondary"
+                        className={`flex items-center space-x-1.5 rounded-lg px-3 py-1.5 transition-colors font-medium text-[13px] ${
+                          item.hasUpvoted ? 'text-red-400' : 'text-zinc-400 hover:text-zinc-200'
                         }`}
+                        style={{ background: item.hasUpvoted ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.05)' }}
                         disabled={!user}
                       >
-                        <Heart
-                          className={`w-4 h-4 ${
-                            item.hasUpvoted ? "fill-current" : ""
-                          }`}
-                        />
-                        <span className="text-xs font-medium">
-                          {item.upvoteCount}
-                        </span>
+                        <Heart className={`w-4 h-4 ${item.hasUpvoted ? 'fill-current' : ''}`} />
+                        <span>{item.upvoteCount}</span>
                       </button>
-
-                      {/* Comments placeholder */}
-                      <button className="flex items-center space-x-1 hover:bg-subtle rounded-lg px-2 py-1 transition-colors">
-                        <MessageCircle className="w-4 h-4 text-text-secondary" />
-                        <span className="text-xs font-medium text-text-secondary">
-                          {Math.floor(Math.random() * 10) + 1}
-                        </span>
-                      </button>
-
-                      {/* Location button */}
-                      <button className="flex items-center space-x-1 hover:bg-subtle rounded-lg px-2 py-1 transition-colors">
-                        <MapPin className="w-4 h-4 text-text-secondary" />
-                        <span className="text-xs font-medium text-text-secondary">
-                          View
-                        </span>
+                      <button className="flex items-center space-x-1.5 rounded-lg px-3 py-1.5 transition-colors text-zinc-400" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                        <MessageCircle className="w-4 h-4" />
+                        <span className="text-[13px] font-medium">{Math.floor(Math.random() * 10) + 1}</span>
                       </button>
                     </div>
-
-                    {/* Status Badge */}
-                    <div
-                      className={`text-xs font-medium ${item.statusDisplay.color} flex items-center space-x-1`}
-                    >
+                    <div className={`text-[11px] font-bold tracking-tight uppercase ${item.statusDisplay.color} flex items-center space-x-1 px-2 py-1 rounded-md`} style={{ background: 'rgba(255,255,255,0.05)' }}>
                       <span>{item.statusDisplay.emoji}</span>
-                      <span>{item.statusDisplay.label}</span>
+                      <span className="ml-1">{item.statusDisplay.label}</span>
                     </div>
                   </div>
                 </div>

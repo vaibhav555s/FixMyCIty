@@ -239,34 +239,34 @@ const MyReports: React.FC<MyReportsProps> = ({
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-h2 font-semibold text-accent">My Reports</h1>
-              <p className="text-sm text-text-secondary">
-                {counts.total} reports • {counts.resolved} resolved
+              <h1 className="text-[2rem] font-black text-zinc-950" style={{ letterSpacing: '-0.04em' }}>My Reports</h1>
+              <p className="text-[14px] font-medium text-zinc-500 mt-1">
+                {counts.total} reports · {counts.resolved} resolved
               </p>
             </div>
             <button
               onClick={() => onNavigate("report")}
-              className="bg-accent text-white p-3 rounded-xl hover:opacity-95 transition-opacity"
+              className="bg-zinc-900 text-white p-3.5 rounded-full hover:bg-zinc-800 transition-all shadow-md active:scale-95"
             >
               <Plus className="w-5 h-5" />
             </button>
           </div>
 
           {/* Filter Pills */}
-          <div className="flex space-x-2 mb-6 overflow-x-auto">
+          <div className="flex space-x-2 mb-6 overflow-x-auto pb-1 scrollbar-hide">
             {filters.map((filter) => (
-              <button
-                key={filter.id}
-                onClick={() => setActiveFilter(filter.id as any)}
-                className={`px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors duration-200 ${
-                  activeFilter === filter.id
-                    ? "bg-accent text-white"
-                    : "bg-subtle text-text-secondary hover:bg-borders"
-                }`}
-              >
-                {filter.label}
-              </button>
-            ))}
+            <button
+              key={filter.id}
+              onClick={() => setActiveFilter(filter.id as any)}
+              className={`px-4 py-2 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all duration-200 ${
+                activeFilter === filter.id
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "bg-white border border-zinc-200/60 text-zinc-600 hover:bg-zinc-50"
+              }`}
+            >
+              {filter.label}
+            </button>
+          ))}
           </div>
 
           {/* Error State */}
@@ -327,12 +327,12 @@ const MyReports: React.FC<MyReportsProps> = ({
                 return (
                   <div
                     key={report.id}
-                    className="bg-surface border border-borders rounded-2xl overflow-hidden card-hover"
+                    className="card-premium overflow-hidden flex flex-col group cursor-pointer"
                   >
-                    <div className="h-32 bg-subtle relative">
+                    <div className="h-32 bg-zinc-100 relative border-b border-zinc-200/50">
                       {!hasImages && (
                         <div className="h-full w-full flex items-center justify-center">
-                          <span className="text-3xl">{emoji}</span>
+                          <span className="text-4xl opacity-80">{emoji}</span>
                         </div>
                       )}
 
@@ -340,25 +340,28 @@ const MyReports: React.FC<MyReportsProps> = ({
                         <ImageCarousel imageUrls={report.imageUrls!} />
                       )}
                     </div>
-                    <div className="p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-lg">{emoji}</span>
-                        <div
-                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${badge.badge}`}
-                        >
-                          {badge.icon} {badge.label}
+                    <div className="p-4 flex-1 flex flex-col justify-between">
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xl">{emoji}</span>
+                          <div
+                            className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold tracking-tight uppercase ${badge.badge}`}
+                          >
+                            <span className="mr-1">{badge.icon}</span> {badge.label}
+                          </div>
+                        </div>
+                        <h3 className="text-[14px] font-semibold text-zinc-900 mb-1 tracking-tight leading-snug line-clamp-2">
+                          {report.title}
+                        </h3>
+                        <div className="text-[11px] font-medium text-zinc-500 tracking-tight mb-2">
+                          📍 {loc.slice(0, 15)}{loc.length > 15 && "..."} • {timeAgo(created)}
                         </div>
                       </div>
-                      <h3 className="text-sm font-semibold text-accent mb-1">
-                        {report.title}
-                      </h3>
-                      <div className="text-xs text-text-secondary">
-                        📍 {loc} • {timeAgo(created)}
-                      </div>
-                      <div className="mt-3">
-                        <div className="h-1 bg-borders rounded-full">
+
+                      <div className="mt-2 pt-3 border-t border-zinc-100">
+                        <div className="h-1.5 bg-zinc-100 rounded-full overflow-hidden">
                           <div
-                            className={`h-full ${badge.bar} rounded-full transition-all duration-300`}
+                            className={`h-full ${badge.bar} transition-all duration-300 rounded-full`}
                             style={{ width: `${badge.progress}%` }}
                           ></div>
                         </div>

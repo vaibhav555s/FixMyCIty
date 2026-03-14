@@ -39,73 +39,73 @@ const IssueDetail: React.FC<IssueDetailProps> = ({ onBack }) => {
 
   return (
     <section className="min-h-screen bg-surface">
-      <div className="max-w-lg mx-auto">
+      <div className="max-w-lg mx-auto pb-20">
         
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-borders">
+        <div className="flex items-center justify-between p-5 border-b border-zinc-200/50 bg-white/80 backdrop-blur-md sticky top-0 z-10">
           <button 
             onClick={onBack}
-            className="p-2 hover:bg-subtle rounded-lg transition-colors"
+            className="p-2.5 bg-white border border-zinc-200/60 shadow-sm rounded-full hover:bg-zinc-50 transition-colors"
           >
-            <ArrowLeft className="w-5 h-5 text-text-secondary" />
+            <ArrowLeft className="w-5 h-5 text-zinc-600" />
           </button>
-          <h1 className="text-lg font-semibold text-accent">Issue Details</h1>
-          <button className="p-2 hover:bg-subtle rounded-lg transition-colors">
-            <Share className="w-5 h-5 text-text-secondary" />
+          <h1 className="text-[17px] font-semibold text-zinc-900 tracking-tight">Issue Details</h1>
+          <button className="p-2.5 bg-white border border-zinc-200/60 shadow-sm rounded-full hover:bg-zinc-50 transition-colors">
+            <Share className="w-5 h-5 text-zinc-600" />
           </button>
         </div>
         
         {/* Hero Image */}
-        <div className="h-64 bg-subtle flex items-center justify-center">
-          <span className="text-6xl">🕳️</span>
+        <div className="h-72 bg-zinc-100 flex items-center justify-center relative border-b border-zinc-200/50">
+          <span className="text-7xl opacity-80 shadow-sm">🕳️</span>
         </div>
         
         {/* Content */}
         <div className="p-6">
           
           {/* Title & Meta */}
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <h2 className="text-xl font-semibold text-accent mb-2">Pothole on Main Street</h2>
-              <div className="flex items-center text-sm text-text-secondary mb-2">
-                <MapPin className="w-4 h-4 mr-1" />
+          <div className="flex items-start justify-between mb-6">
+            <div className="pr-4">
+              <h2 className="text-2xl font-bold text-zinc-900 mb-2 tracking-tight leading-tight">Pothole on Main Street</h2>
+              <div className="flex items-center text-[13px] font-medium text-zinc-500 mb-2">
+                <MapPin className="w-4 h-4 mr-1.5" />
                 <span>Near Coffee Shop Junction</span>
               </div>
-              <div className="text-sm text-text-secondary">⏰ Reported 2 hours ago</div>
+              <div className="text-[12px] font-semibold text-zinc-400">⏰ Reported 2 hours ago</div>
             </div>
-            <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-amber-100 text-amber-800">
+            <div className="inline-flex items-center px-3 py-1.5 rounded-full text-[11px] font-bold tracking-tight uppercase bg-amber-100 text-amber-800 shadow-sm whitespace-nowrap">
               ⏳ In Review
             </div>
           </div>
           
           {/* Description */}
-          <div className="mb-6">
-            <p className="text-accent leading-relaxed">Large pothole causing traffic issues near the main intersection. Multiple vehicles are swerving to avoid it which creates safety hazard for pedestrians and other vehicles.</p>
+          <div className="mb-8">
+            <p className="text-[15px] text-zinc-700 leading-relaxed tracking-tight">Large pothole causing traffic issues near the main intersection. Multiple vehicles are swerving to avoid it which creates safety hazard for pedestrians and other vehicles.</p>
           </div>
           
           {/* Progress Timeline */}
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-accent mb-4">Progress Timeline</h3>
-            <div className="space-y-4">
+          <div className="mb-8 card-premium p-6">
+            <h3 className="text-[16px] font-semibold text-zinc-900 mb-5 tracking-tight">Progress Timeline</h3>
+            <div className="space-y-6 relative before:absolute before:inset-0 before:ml-4 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-zinc-200 before:to-transparent">
               {timelineSteps.map((step) => (
-                <div key={step.id} className="flex items-center">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-4 ${
+                <div key={step.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                  <div className={`flex items-center justify-center w-8 h-8 rounded-full border-4 border-white shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm z-10 ${
                     step.status === 'completed' 
                       ? 'bg-emerald-500 text-white' 
                       : step.status === 'current'
-                      ? 'bg-amber-500 text-white'
-                      : 'bg-borders text-text-secondary'
+                      ? 'bg-zinc-900 text-white'
+                      : 'bg-zinc-100 text-zinc-400'
                   }`}>
-                    <span className="text-sm">{step.icon}</span>
+                    <span className="text-[11px] font-bold">{step.icon}</span>
                   </div>
-                  <div>
-                    <div className={`font-medium ${
-                      step.status === 'pending' ? 'text-text-secondary' : 'text-accent'
+                  <div className="w-[calc(100%-3rem)] md:w-[calc(50%-2.5rem)] pl-4 md:pl-0 md:group-odd:text-right md:group-even:text-left">
+                    <div className={`font-semibold tracking-tight text-[15px] mb-0.5 ${
+                      step.status === 'pending' ? 'text-zinc-400' : 'text-zinc-900'
                     }`}>
                       {step.title}
                     </div>
-                    <div className={`text-sm ${
-                      step.status === 'pending' ? 'text-text-secondary' : 'text-text-secondary'
+                    <div className={`text-[13px] font-medium leading-tight ${
+                      step.status === 'pending' ? 'text-zinc-400' : 'text-zinc-500'
                     }`}>
                       {step.description}
                     </div>
@@ -116,24 +116,24 @@ const IssueDetail: React.FC<IssueDetailProps> = ({ onBack }) => {
           </div>
           
           {/* Community Engagement */}
-          <div className="border-t border-borders pt-6">
+          <div className="pt-2">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-accent">Community</h3>
-              <div className="text-sm text-text-secondary">24 people affected</div>
+              <h3 className="text-[16px] font-semibold text-zinc-900 tracking-tight">Community</h3>
+              <div className="text-[13px] font-medium text-zinc-500">24 people affected</div>
             </div>
             
-            <div className="flex items-center space-x-4">
-              <button className="flex items-center space-x-2 px-4 py-2 bg-subtle rounded-xl hover:bg-borders transition-colors">
-                <ThumbsUp className="w-4 h-4" />
-                <span className="text-sm font-medium">Upvote (24)</span>
+            <div className="grid grid-cols-3 gap-3">
+              <button className="flex flex-col items-center justify-center p-3 bg-white border border-zinc-200/60 rounded-2xl hover:bg-zinc-50 hover:border-zinc-300 transition-all shadow-sm">
+                <ThumbsUp className="w-5 h-5 text-zinc-600 mb-2" />
+                <span className="text-[12px] font-semibold text-zinc-700">Upvote (24)</span>
               </button>
-              <button className="flex items-center space-x-2 px-4 py-2 bg-subtle rounded-xl hover:bg-borders transition-colors">
-                <MessageCircle className="w-4 h-4" />
-                <span className="text-sm font-medium">Comment (8)</span>
+              <button className="flex flex-col items-center justify-center p-3 bg-white border border-zinc-200/60 rounded-2xl hover:bg-zinc-50 hover:border-zinc-300 transition-all shadow-sm">
+                <MessageCircle className="w-5 h-5 text-zinc-600 mb-2" />
+                <span className="text-[12px] font-semibold text-zinc-700">Comment (8)</span>
               </button>
-              <button className="flex items-center space-x-2 px-4 py-2 bg-subtle rounded-xl hover:bg-borders transition-colors">
-                <MapPin className="w-4 h-4" />
-                <span className="text-sm font-medium">Directions</span>
+              <button className="flex flex-col items-center justify-center p-3 bg-zinc-900 rounded-2xl hover:bg-zinc-800 transition-all shadow-sm text-white">
+                <MapPin className="w-5 h-5 mb-2" />
+                <span className="text-[12px] font-semibold">Directions</span>
               </button>
             </div>
           </div>

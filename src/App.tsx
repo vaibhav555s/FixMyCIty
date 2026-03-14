@@ -11,6 +11,7 @@ import Profile from "./components/Profile";
 import MobileReportSection from "./components/MobileReportSection";
 import IssueDetail from "./components/IssueDetail";
 import AuthPage from "./components/auth/AuthPage";
+import AIAnalysisDashboard from "./components/AIAnalysisDashboard";
 
 // Admin Components
 import { AdminRoutes } from "./routes/AdminRoutes";
@@ -23,6 +24,7 @@ const UserApp: React.FC = () => {
   const [activeTab, setActiveTab] = useState("home");
   const [showIssueDetail, setShowIssueDetail] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
+  const [pendingReport, setPendingReport] = useState<any>(null);
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
@@ -57,10 +59,23 @@ const UserApp: React.FC = () => {
           <MobileReportSection
             onBack={() => setActiveTab("home")}
             onAuthRequired={handleAuthRequired}
+            onNavigate={handleTabChange}
+            setPendingReport={setPendingReport}
           />
         );
       case "feed":
         return <CommunityFeed />;
+      case "ai":
+        return (
+          <AIAnalysisDashboard 
+            onBack={() => setActiveTab("home")} 
+            pendingReport={pendingReport}
+            onComplete={() => {
+              setPendingReport(null);
+              setActiveTab("home");
+            }}
+          />
+        );
       case "reports":
         return (
           <MyReports
@@ -81,14 +96,37 @@ const UserApp: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background font-sans">
-      {/* Main Content Area */}
-      <main className="pb-20 safe-area-pt">{renderContent()}</main>
+    <div
+      className="flex justify-center"
+      style={{ background: '#06060A', minHeight: '100dvh' }}
+    >
+      <div
+        className="relative flex flex-col w-full"
+        style={{ maxWidth: '390px', height: '100dvh', background: '#0F0F13' }}
+      >
+        {/* Scrollable main content — nav always at bottom */}
+        <main className="flex-1 overflow-y-auto overscroll-contain">
+          {renderContent()}
+        </main>
 
-      {/* Bottom Navigation - hide on report or auth */}
-      {!showIssueDetail && activeTab !== "report" && !showAuth && (
-        <BottomNavigation activeTab={activeTab} onTabChange={handleTabChange} />
-      )}
+        {/* Floating Action Button — sits above nav on Home */}
+        {activeTab === "home" && !showAuth && !showIssueDetail && (
+          <button
+            onClick={handleAuthRequired}
+            className="absolute bottom-20 right-4 w-14 h-14 rounded-2xl flex items-center justify-center shadow-2xl z-40 active:scale-95 transition-transform"
+            style={{ background: "#7C6FFF" }}
+          >
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </button>
+        )}
+
+        {/* Bottom Navigation */}
+        {!showIssueDetail && activeTab !== "report" && !showAuth && (
+          <BottomNavigation activeTab={activeTab} onTabChange={handleTabChange} />
+        )}
+      </div>
     </div>
   );
 };

@@ -1,265 +1,252 @@
 import React, { useState, useEffect } from "react";
 import {
-  Camera,
+  Bell,
   MapPin,
   BarChart3,
-  ArrowUpRight,
-  TrendingUp,
-  Users,
+  Map,
+  Cpu,
+  AlertCircle,
+  Sun,
+  Trash2,
 } from "lucide-react";
-
-interface WeatherData {
-  city: string;
-  state: string;
-  temperature: number;
-  condition: string;
-  icon: string;
-}
 
 interface MobileHomeProps {
   onNavigate: (tab: string) => void;
   onAuthRequired: () => void;
 }
 
+const NEARBY_ISSUES = [
+  {
+    id: 1,
+    title: "Large Pothole",
+    subtitle: "SV Road, Andheri West",
+    severity: "CRITICAL",
+    status: "IN PROGRESS",
+    time: "2 hours ago",
+    confidence: 94,
+    severityColor: "bg-red-500/20 text-red-400",
+    statusColor: "bg-violet-500/20 text-violet-300",
+    iconBg: "bg-red-500/15",
+    iconColor: "text-red-400",
+    Icon: AlertCircle,
+  },
+  {
+    id: 2,
+    title: "Broken Streetlight",
+    subtitle: "Lokhandwala Circle, Andheri",
+    severity: "MEDIUM",
+    status: "ASSIGNED",
+    time: "1 day ago",
+    confidence: 88,
+    severityColor: "bg-amber-500/20 text-amber-400",
+    statusColor: "bg-blue-500/20 text-blue-300",
+    iconBg: "bg-amber-500/15",
+    iconColor: "text-amber-400",
+    Icon: Sun,
+  },
+  {
+    id: 3,
+    title: "Overflowing Garbage Bin",
+    subtitle: "Juhu Beach Road, Mumbai",
+    severity: "LOW",
+    status: "PENDING",
+    time: "3 days ago",
+    confidence: 81,
+    severityColor: "bg-emerald-500/20 text-emerald-400",
+    statusColor: "bg-zinc-500/20 text-zinc-400",
+    iconBg: "bg-emerald-500/15",
+    iconColor: "text-emerald-400",
+    Icon: Trash2,
+  },
+];
+
+const getTimeOfDay = () => {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12) return "Good Morning";
+  if (h >= 12 && h < 17) return "Good Afternoon";
+  if (h >= 17 && h < 21) return "Good Evening";
+  return "Good Night";
+};
+
 const MobileHome: React.FC<MobileHomeProps> = ({ onNavigate, onAuthRequired }) => {
-  const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const getTimeBasedGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour >= 5 && hour < 12) return "Good Morning! ☀️";
-    if (hour >= 12 && hour < 17) return "Good Afternoon! 🌤️";
-    if (hour >= 17 && hour < 21) return "Good Evening! 🌅";
-    return "Good Night! 🌙";
-  };
-
-  const fetchLocationAndWeather = async () => {
-    try {
-      setLoading(true);
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-
-      const mockWeatherData: WeatherData = {
-        city: "Mumbai",
-        state: "Maharashtra",
-        temperature: 28,
-        condition: "partly cloudy",
-        icon: "🌤️",
-      };
-
-      setWeather(mockWeatherData);
-      setLoading(false);
-    } catch (error) {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchLocationAndWeather();
-  }, []);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   return (
-    <section className="px-4 pt-12 pb-20 bg-gray-50 min-h-screen">
-      <div className="max-w-sm mx-auto">
-        {/* Header with subtle animation */}
-        <div className="mb-16 animate-fade-in">
-          <h1 className="text-4xl font-bold text-black mb-3 tracking-tight leading-tight">
-            {getTimeBasedGreeting()}
-          </h1>
+    <div style={{ background: "#0F0F13", fontFamily: "'Inter', sans-serif", paddingBottom: '1.5rem' }}>
+      {/* ── Top Bar ── */}
+      <div className="flex items-center justify-between px-5 pt-12 pb-4">
+        <span
+          className="text-[22px] font-black tracking-tight text-white"
+          style={{ letterSpacing: "-0.03em" }}
+        >
+          CivicConnect
+        </span>
+        <button className="relative w-9 h-9 flex items-center justify-center rounded-full"
+          style={{ background: "#1C1C24" }}>
+          <Bell className="w-5 h-5 text-zinc-400" />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-[#0F0F13]" />
+        </button>
+      </div>
 
-          {/* Location Card - Clean but present */}
-          {!loading && weather && (
-            <div className="inline-flex items-center space-x-3 bg-white rounded-xl px-4 py-2 shadow-sm border border-gray-100 animate-slide-up">
-              <MapPin className="w-4 h-4 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">
-                {weather.city} • {weather.temperature}°C {weather.icon}
-              </span>
-            </div>
-          )}
+      {/* ── Greeting ── */}
+      <div className={`px-5 mb-5 transition-all duration-700 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"}`}>
+        <p className="text-[13px] font-medium text-zinc-500 mb-0.5">{getTimeOfDay()}</p>
+        <h1 className="text-[26px] font-black text-white tracking-tight" style={{ letterSpacing: "-0.03em" }}>
+          Welcome back,{" "}
+          <span style={{ color: "#7C6FFF" }}>Citizen</span>
+        </h1>
+      </div>
 
-          {loading && (
-            <div className="inline-flex items-center space-x-3 bg-white rounded-xl px-4 py-2 shadow-sm border border-gray-100">
-              <div className="w-4 h-4 bg-gray-300 rounded-full animate-pulse"></div>
-              <span className="text-sm text-gray-500">Getting location...</span>
-            </div>
-          )}
-
-          <p className="text-gray-600 text-lg mt-4">
-            Ready to make your city better?
-          </p>
-        </div>
-
-        {/* Hero Button with micro-interaction */}
-        <div className="mb-14 animate-fade-in-delay">
-          <button
-            onClick={() => onAuthRequired()}
-            className="group w-full bg-black text-white py-5 rounded-2xl text-xl font-semibold hover:bg-gray-900 transition-all duration-300 active:scale-95 shadow-lg hover:shadow-xl"
-          >
-            <div className="flex items-center justify-center space-x-3">
-              <Camera className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" />
-              <span>Report New Issue</span>
-            </div>
-          </button>
-
-          {/* Subtle hint */}
-          <p className="text-center text-xs text-gray-500 mt-3 opacity-75">
-            One tap to make a difference
-          </p>
-        </div>
-
-        {/* Enhanced Stats with better visual weight */}
-        <div className="grid grid-cols-2 gap-4 mb-12 animate-fade-in-delay-2">
-          <div className="bg-white rounded-2xl p-6 text-center shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300">
-            <div className="text-4xl font-black text-black mb-2 hover:scale-110 transition-transform duration-300 cursor-default">
-              12
-            </div>
-            <div className="text-sm text-gray-600 font-medium">
-              Your Reports
-            </div>
-            <div className="text-xs text-emerald-600 font-semibold mt-1">
-              +2 this week
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 text-center shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300">
-            <div className="text-4xl font-black text-emerald-600 mb-2 hover:scale-110 transition-transform duration-300 cursor-default">
-              8
-            </div>
-            <div className="text-sm text-gray-600 font-medium">Resolved</div>
-            <div className="text-xs text-emerald-600 font-semibold mt-1">
-              67% success
-            </div>
-          </div>
-        </div>
-
-        {/* Community Insight - Adds visual interest */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-5 mb-8 border border-blue-100 animate-fade-in-delay-3">
-          <div className="flex items-center space-x-3 mb-3">
-            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-4 h-4 text-blue-600" />
-            </div>
-            <h3 className="font-semibold text-gray-900">Community Activity</h3>
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Users className="w-4 h-4 text-gray-500" />
-              <span className="text-sm text-gray-700">
-                24 issues reported nearby
-              </span>
-            </div>
-            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">
-              +15% this week
-            </span>
-          </div>
-        </div>
-
-        {/* Action Cards - Better visual hierarchy */}
-        <div className="space-y-3 animate-fade-in-delay-4">
-          <button
-            onClick={() => onNavigate("feed")}
-            className="w-full bg-white border border-gray-200 rounded-2xl p-5 hover:border-black hover:shadow-lg transition-all duration-300 group"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center group-hover:bg-blue-100 transition-colors duration-300">
-                  <MapPin className="w-6 h-6 text-blue-600" />
-                </div>
-                <div className="text-left">
-                  <div className="text-lg font-semibold text-black">
-                    Nearby Issues
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    Explore your community
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
-                  24
-                </span>
-                <ArrowUpRight className="w-5 h-5 text-gray-400 group-hover:text-black group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300" />
-              </div>
-            </div>
-          </button>
-
-          <button
-            onClick={() => onNavigate("reports")}
-            className="w-full bg-white border border-gray-200 rounded-2xl p-5 hover:border-black hover:shadow-lg transition-all duration-300 group"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center group-hover:bg-emerald-100 transition-colors duration-300">
-                  <BarChart3 className="w-6 h-6 text-emerald-600" />
-                </div>
-                <div className="text-left">
-                  <div className="text-lg font-semibold text-black">
-                    My Reports
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    Track your progress
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-medium">
-                  67%
-                </span>
-                <ArrowUpRight className="w-5 h-5 text-gray-400 group-hover:text-black group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300" />
-              </div>
-            </div>
-          </button>
+      {/* ── Stats Card ── */}
+      <div className="px-5 mb-7">
+        <div
+          className="rounded-2xl p-5 flex items-center"
+          style={{
+            background: "linear-gradient(135deg, #6B5CF2 0%, #7C6FFF 40%, #8B5CF6 100%)",
+          }}
+        >
+          <StatItem value="14" label="Reports" border />
+          <StatItem value="11" label="Resolved" border />
+          <StatItem value="78%" label="Success" />
         </div>
       </div>
 
-      {/* Custom CSS for animations */}
-      <style jsx>{`
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
+      {/* ── Quick Actions ── */}
+      <div className="px-5 mb-7">
+        <h2 className="text-[16px] font-bold text-white mb-4" style={{ letterSpacing: "-0.02em" }}>
+          Quick Actions
+        </h2>
+        <div className="grid grid-cols-4 gap-3">
+          <QuickAction
+            Icon={AlertCircle}
+            iconColor="#7C6FFF"
+            iconBg="rgba(124,111,255,0.12)"
+            label="Report Issue"
+            onClick={onAuthRequired}
+          />
+          <QuickAction
+            Icon={BarChart3}
+            iconColor="#10B981"
+            iconBg="rgba(16,185,129,0.12)"
+            label="My Reports"
+            onClick={() => onNavigate("reports")}
+          />
+          <QuickAction
+            Icon={Map}
+            iconColor="#F59E0B"
+            iconBg="rgba(245,158,11,0.12)"
+            label="Heatmap"
+            onClick={() => onNavigate("feed")}
+          />
+          <QuickAction
+            Icon={Cpu}
+            iconColor="#F97316"
+            iconBg="rgba(249,115,22,0.12)"
+            label="AI Engine"
+            onClick={() => onNavigate("report")}
+          />
+        </div>
+      </div>
 
-        @keyframes slide-up {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
+      {/* ── Nearby Issues ── */}
+      <div className="px-5">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-[16px] font-bold text-white" style={{ letterSpacing: "-0.02em" }}>
+            Nearby Issues
+          </h2>
+          <button
+            onClick={() => onNavigate("feed")}
+            className="text-[13px] font-semibold"
+            style={{ color: "#7C6FFF" }}
+          >
+            See all
+          </button>
+        </div>
 
-        .animate-fade-in {
-          animation: fade-in 0.6s ease-out;
-        }
+        <div className="space-y-3">
+          {NEARBY_ISSUES.map((issue) => (
+            <button
+              key={issue.id}
+              onClick={() => onNavigate("feed")}
+              className="w-full flex items-center space-x-4 p-4 rounded-2xl text-left transition-all active:scale-[0.98]"
+              style={{ background: "#1C1C24" }}
+            >
+              {/* Icon */}
+              <div
+                className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${issue.iconBg}`}
+              >
+                <issue.Icon className={`w-5 h-5 ${issue.iconColor}`} />
+              </div>
 
-        .animate-fade-in-delay {
-          animation: fade-in 0.6s ease-out 0.1s both;
-        }
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="text-[15px] font-bold text-white truncate" style={{ letterSpacing: "-0.02em" }}>
+                    {issue.title}
+                  </span>
+                </div>
+                <div className="flex items-center space-x-1 mb-2">
+                  <MapPin className="w-3 h-3 text-zinc-500 flex-shrink-0" />
+                  <span className="text-[12px] text-zinc-500 truncate font-medium">{issue.subtitle}</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider ${issue.severityColor}`}>
+                    {issue.severity}
+                  </span>
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider ${issue.statusColor}`}>
+                    {issue.status}
+                  </span>
+                </div>
+                <div className="mt-1.5 text-[11px] text-zinc-600 font-medium">
+                  {issue.time} &nbsp;·&nbsp; AI: {issue.confidence}% confident
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
 
-        .animate-fade-in-delay-2 {
-          animation: fade-in 0.6s ease-out 0.2s both;
-        }
-
-        .animate-fade-in-delay-3 {
-          animation: fade-in 0.6s ease-out 0.3s both;
-        }
-
-        .animate-fade-in-delay-4 {
-          animation: fade-in 0.6s ease-out 0.4s both;
-        }
-
-        .animate-slide-up {
-          animation: slide-up 0.4s ease-out 0.2s both;
+      <style>{`
+        @keyframes cc-rise {
+          from { opacity: 0; transform: translateY(14px); }
+          to   { opacity: 1; transform: translateY(0); }
         }
       `}</style>
-    </section>
+    </div>
   );
 };
+
+/* ── Helpers ── */
+const StatItem: React.FC<{ value: string; label: string; border?: boolean }> = ({ value, label, border }) => (
+  <div className={`flex-1 text-center ${border ? "border-r border-white/20 mr-1 pr-1" : ""}`}>
+    <div className="text-[26px] font-black text-white leading-none mb-1" style={{ letterSpacing: "-0.04em" }}>
+      {value}
+    </div>
+    <div className="text-[11px] font-semibold text-white/60 uppercase tracking-widest">{label}</div>
+  </div>
+);
+
+const QuickAction: React.FC<{
+  Icon: React.ElementType;
+  iconColor: string;
+  iconBg: string;
+  label: string;
+  onClick: () => void;
+}> = ({ Icon, iconColor, iconBg, label, onClick }) => (
+  <button
+    onClick={onClick}
+    className="flex flex-col items-center space-y-2 p-3 rounded-2xl transition-all active:scale-95"
+    style={{ background: "#1C1C24" }}
+  >
+    <div
+      className="w-11 h-11 rounded-xl flex items-center justify-center"
+      style={{ background: iconBg }}
+    >
+      <Icon className="w-5 h-5" style={{ color: iconColor }} />
+    </div>
+    <span className="text-[10px] font-semibold text-zinc-400 text-center leading-tight">{label}</span>
+  </button>
+);
 
 export default MobileHome;

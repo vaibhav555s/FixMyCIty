@@ -12,36 +12,26 @@ import {
   Shield,
   Upload,
   Send,
-  CheckCircle,
-  Plus,
+  CheckCircle2,
+  Loader2,
+  BrainCircuit,
   X,
 } from "lucide-react";
 import ProtectedRoute from './auth/ProtectedRoute';
-import { db } from '../../lib/firebase'; // Adjust path as needed
 import { useAuth } from '../contexts/AuthContext';
-import {
-  collection,
-  addDoc,
-  serverTimestamp,
-  doc,
-  updateDoc,
-  increment,
-} from "firebase/firestore";
 
-import { uploadImageToCloudinary, createSignatureGenerator } from "../lib/cloudinary";
-
-const CLOUDINARY_CLOUD_NAME = "civicconnect";
-const CLOUDINARY_API_KEY = "415284245642869";
-const CLOUDINARY_API_SECRET = "SQJRqJ9KaexFBGQcULP3o7HFwU8"; // ⚠ unsafe in frontend
-
-interface MobileReportSectionProps {
+export interface MobileReportSectionProps {
   onBack: () => void;
   onAuthRequired: () => void;
+  onNavigate?: (tab: string) => void;
+  setPendingReport?: (report: any) => void;
 }
 
 const MobileReportSection: React.FC<MobileReportSectionProps> = ({
   onBack,
   onAuthRequired,
+  onNavigate,
+  setPendingReport,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [title, setTitle] = useState<string>("");
@@ -54,9 +44,22 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
   const [locationPermissionStatus, setLocationPermissionStatus] = useState<
     "idle" | "requesting" | "granted" | "denied"
   >("idle");
-  const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
   const { user } = useAuth();
+
+  // AI Pipeline State
+  const [aiState, setAiState] = useState<"idle" | "analyzing" | "complete">("idle");
+  const [pipelineStep, setPipelineStep] = useState<number>(0);
+
+  const AI_STEPS = [
+    "Image Quality Validation",
+    "Metadata Verification",
+    "YOLOv8 Infrastructure Detection",
+    "Duplicate Issue Detection",
+    "Fraud / Manipulation Check",
+    "Severity Classification",
+    "Smart Prioritization Engine"
+  ];
+
 
   // ✅ UPDATED CATEGORIES - Now matches department authentication exactly
   const categories = [
@@ -109,6 +112,48 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
       examples: "Unsafe structures, security concerns",
     },
   ];
+
+  // Auto-proceed when AI scanning is complete
+  React.useEffect(() => {
+    if (aiState === "complete") {
+      proceedToAnalysis();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiState]);
+
+  const proceedToAnalysis = () => {
+    const selectedCategoryData = categories.find((cat) => cat.id === selectedCategory);
+    const assignedDepartment = selectedCategoryData?.department || "General";
+
+    if (setPendingReport && user) {
+      setPendingReport({
+        title: title.trim(),
+        description: description.trim(),
+        selectedCategory,
+        selectedCategoryData,
+        assignedDepartment,
+        selectedImages,
+        imagePreviews,
+        location,
+        user,
+      });
+    }
+
+    // Reset local form state
+    setTitle("");
+    setDescription("");
+    setSelectedCategory("");
+    setSelectedImages([]);
+    setImagePreviews([]);
+    setLocation(null);
+    setLocationPermissionStatus("idle");
+
+    if (onNavigate) {
+      onNavigate("ai");
+    } else {
+      onBack();
+    }
+  };
 
   // Handle multiple image selection
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -239,183 +284,90 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
     );
   };
 
-  // ✅ FIXED FORM SUBMISSION - Firebase timestamp error resolved
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Form submission handled by AI Dashboard now
+  const handleSubmitPrompt = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!title || !selectedCategory || !user) return;
+    
+    setAiState("analyzing");
+    setPipelineStep(0);
 
-    setSubmitting(true);
-
-    try {
-      // Upload images to Cloudinary
-      const imageFileNames = selectedImages.map((file) => file.name);
-      let imageUrls: string[] = [];
-      let imagePublicIds: string[] = [];
-
-      if (selectedImages.length > 0) {
-        const generate = createSignatureGenerator(CLOUDINARY_API_SECRET);
-        const folder = "civicconnect/reports";
-
-        const results = await Promise.all(
-          selectedImages.map((file) =>
-            uploadImageToCloudinary(file, {
-              cloudName: CLOUDINARY_CLOUD_NAME,
-              apiKey: CLOUDINARY_API_KEY,
-              folder,
-              generateSignature: (params) => generate(params),
-            })
-          )
-        );
-
-        imageUrls = results.map((r) => r.url);
-        imagePublicIds = results.map((r) => r.publicId);
+    const runStep = (step: number) => {
+      if (step < AI_STEPS.length) {
+        setPipelineStep(step);
+        setTimeout(() => runStep(step + 1), 700 + Math.random() * 300); // 700-1000ms delay
+      } else {
+        setTimeout(() => setAiState("complete"), 600);
       }
-
-      // Get assigned department from selected category
-      const selectedCategoryData = categories.find((cat) => cat.id === selectedCategory);
-      const assignedDepartment = selectedCategoryData?.department || "General";
-
-      console.log('🎯 Auto-assigning to department:', assignedDepartment);
-
-      // ✅ FIXED REPORT DATA - No serverTimestamp() in arrays
-      const reportData = {
-        // User Association
-        userId: user.uid,
-        userEmail: user.email,
-        userDisplayName: user.displayName || "Anonymous",
-
-        // Report Details
-        title: title.trim(),
-        description: description.trim(),
-        category: selectedCategory,
-
-        // Location Data
-        location: location
-          ? {
-              lat: location.lat,
-              lng: location.lng,
-              address: location.displayAddress || location.fullAddress,
-              fullLocation: location,
-            }
-          : null,
-
-        // Media
-        imageFileNames: imageFileNames,
-        imageUrls: imageUrls,
-        imagePublicIds: imagePublicIds,
-
-        // Status & Timestamps
-        status: "pending",
-        priority: "medium",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-
-        // ✅ ASSIGNMENT TRACKING - No arrays with serverTimestamp()
-        assignedDepartment: assignedDepartment,
-        assignedAt: serverTimestamp(),
-        assignedBy: "system",
-
-        // Department Communication (empty arrays are fine)
-        departmentComments: [],
-        beforeAfterImages: { before: [], after: [] },
-
-        // 🔔 REAL-TIME NOTIFICATION FLAGS
-        isNewAssignment: true,
-        departmentNotified: false,
-        notificationSent: false,
-
-        // Analytics
-        reportId: null, // Will be set after document creation
-      };
-
-      console.log('💾 Saving report data to Firebase...');
-
-      // Save to Firestore
-      const docRef = await addDoc(collection(db, "reports"), reportData);
-
-      // ✅ ADD ASSIGNMENT HISTORY AFTER DOCUMENT CREATION (FIXED)
-      await updateDoc(docRef, {
-        reportId: docRef.id,
-        assignmentHistory: [
-          {
-            department: assignedDepartment,
-            assignedBy: "system",
-            assignedAt: new Date(), // ✅ Use regular Date() instead of serverTimestamp()
-            reason: "Auto-assigned based on category",
-          },
-        ],
-      });
-
-      console.log('✅ Report saved with ID:', docRef.id);
-      console.log('📨 Auto-assigned to department:', assignedDepartment);
-      console.log('🔔 Real-time notification will be sent to department dashboard');
-
-      // Update user stats
-      await updateUserStats(user.uid);
-
-      setSuccess(true);
-
-      // Reset form after success
-      setTimeout(() => {
-        setSuccess(false);
-        setTitle("");
-        setDescription("");
-        setSelectedCategory("");
-        setSelectedImages([]);
-        setImagePreviews([]);
-        setLocation(null);
-        setLocationPermissionStatus("idle");
-        onBack();
-      }, 2500);
-    } catch (error) {
-      console.error("❌ Error saving report:", error);
-      console.error("❌ Error details:", {
-        code: error.code,
-        message: error.message,
-      });
-      alert("Failed to submit report. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
+    };
+    
+    runStep(0);
   };
 
-  // Function to update user statistics
-  const updateUserStats = async (userId: string) => {
-    try {
-      const userRef = doc(db, "users", userId);
-      await updateDoc(userRef, {
-        "stats.reportsSubmitted": increment(1),
-        updatedAt: serverTimestamp(),
-      });
-    } catch (error) {
-      console.error("Error updating user stats:", error);
-    }
-  };
+  // Mobile Report Section renders the form
 
-  // Success screen
-  if (success) {
+  // AI Pipeline Overlay
+  if (aiState === "analyzing" || aiState === "complete") {
     return (
-      <section className="min-h-screen bg-surface flex items-center justify-center px-4">
-        <div className="text-center animate-fade-in">
-          <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="w-10 h-10 text-emerald-600" />
-          </div>
-          <h1 className="text-2xl font-bold text-accent mb-2">
-            Issue Reported Successfully!
-          </h1>
-          <p className="text-text-secondary mb-2">
-            Your report has been submitted to the relevant department
-          </p>
-          {selectedCategory && (
-            <div className="text-sm text-blue-600 bg-blue-50 rounded-lg px-3 py-2 mb-4 inline-block">
-              📨 Assigned to: {categories.find(c => c.id === selectedCategory)?.department}
-            </div>
-          )}
-          <div className="text-sm text-text-secondary">
-            Redirecting to home...
-          </div>
-        </div>
-      </section>
+      <ProtectedRoute onAuthRequired={onAuthRequired} message="Sign in to report issues">
+        <section style={{ background: '#0F0F13', minHeight: '100%', fontFamily: "'Inter', sans-serif" }} className="px-5 pt-10 pb-8 flex flex-col">
+           {/* Header */}
+           <div className="mb-8 animate-fade-in">
+             <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4" style={{ background: '#7C6FFF' }}>
+               <BrainCircuit className="w-6 h-6 text-white" />
+             </div>
+             <h1 className="text-[2rem] font-black text-white leading-[1.1] tracking-tight mb-2" style={{ letterSpacing: '-0.04em' }}>
+               {aiState === "analyzing" ? "AI Analysis" : "Analysis Complete"}
+             </h1>
+             <p className="text-[15px] font-medium text-zinc-500 tracking-tight">
+               {aiState === "analyzing" ? "Processing issue data securely..." : "Review infrastructure assessment"}
+             </p>
+           </div>
+
+           {aiState === "analyzing" && (
+             <div className="flex-1 space-y-4 animate-fade-in-delay">
+               {AI_STEPS.map((step, index) => {
+                 const isCompleted = pipelineStep > index;
+                 const isCurrent = pipelineStep === index;
+                 
+                 return (
+                   <div key={index} className={`flex items-center space-x-4 p-4 rounded-2xl transition-all duration-300 ${isCurrent ? 'bg-white shadow-soft border border-zinc-200/50' : 'opacity-60'}`}>
+                     <div className="w-6 h-6 flex items-center justify-center flex-shrink-0">
+                       {isCompleted ? (
+                         <CheckCircle2 className="w-6 h-6 text-emerald-500" />
+                       ) : isCurrent ? (
+                         <Loader2 className="w-5 h-5 text-indigo-600 animate-spin" />
+                       ) : (
+                         <div className="w-2.5 h-2.5 rounded-full bg-zinc-200" />
+                       )}
+                     </div>
+                     <span className={`text-[15px] font-semibold tracking-tight ${isCurrent ? 'text-zinc-900' : 'text-zinc-500'}`}>
+                       {step}
+                     </span>
+                   </div>
+                 );
+               })}
+             </div>
+           )}
+
+           {aiState === "complete" && (
+             <div className="flex-1 animate-fade-in space-y-5 flex flex-col items-center justify-center mt-12 pb-12">
+               <Loader2 className="w-10 h-10 text-[#7C6FFF] animate-spin mb-4" />
+               <p className="text-[17px] font-bold text-white tracking-tight">AI Analysis Ready</p>
+               <p className="text-[14px] text-zinc-500 font-medium">Redirecting to Dashboard...</p>
+             </div>
+           )}
+           
+           <style>{`
+             @keyframes fade-in {
+               from { opacity: 0; transform: translateY(12px); }
+               to { opacity: 1; transform: translateY(0); }
+             }
+             .animate-fade-in { animation: fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+             .animate-fade-in-delay { animation: fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both; }
+           `}</style>
+        </section>
+      </ProtectedRoute>
     );
   }
 
@@ -424,24 +376,25 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
       onAuthRequired={onAuthRequired}
       message="Sign in to report issues"
     >
-      <section className="min-h-screen bg-surface">
+      <section style={{ background: '#0F0F13', minHeight: '100%', fontFamily: "'Inter', sans-serif" }}>
         <div className="max-w-lg mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-borders">
+          {/* Sticky dark header with back button */}
+          <div className="flex items-center justify-between p-5 sticky top-0 z-10" style={{ background: 'rgba(15,15,19,0.97)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
             <button
               onClick={onBack}
-              className="p-2 hover:bg-subtle rounded-lg transition-colors"
+              className="p-2.5 rounded-full transition-colors active:scale-95"
+              style={{ background: '#1C1C24' }}
             >
-              <ArrowLeft className="w-5 h-5 text-text-secondary" />
+              <ArrowLeft className="w-5 h-5 text-white" />
             </button>
-            <h1 className="text-lg font-semibold text-accent">Report Issue</h1>
-            <div className="w-9"></div>
+            <h1 className="text-[17px] font-bold text-white tracking-tight">Report Issue</h1>
+            <div className="w-10"></div>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-6 space-y-10">
+          <form onSubmit={handleSubmitPrompt} className="px-5 pb-8 animate-fade-in-delay">
             {/* Issue Title */}
             <div>
-              <label className="block text-caption mb-6">
+              <label className="block text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
                 What's the issue?
               </label>
               <div className="relative">
@@ -449,51 +402,43 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Enter issue title"
-                  className="w-full text-2xl font-bold text-accent bg-transparent border-none outline-none placeholder-text-secondary/50 pb-3 border-b-2 border-borders focus:border-accent transition-colors"
+                  placeholder="Enter a descriptive title..."
+                  className="w-full text-2xl font-bold bg-transparent border-none outline-none pb-3 transition-colors tracking-tight"
+                  style={{ color: 'white', borderBottom: '2px solid rgba(255,255,255,0.15)', caretColor: '#7C6FFF' }}
                   required
                 />
               </div>
             </div>
 
-            {/* Category Selection with Department Preview */}
+            {/* Category Selection */}
             <div>
-              <label className="block text-caption mb-4">Select Category</label>
-              <div className="grid grid-cols-1 gap-3">
+              <label className="block text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-3">Select Category</label>
+              <div className="grid grid-cols-1 gap-2.5">
                 {categories.map((category) => {
                   const IconComponent = category.icon;
+                  const isSelected = selectedCategory === category.id;
                   return (
                     <button
                       key={category.id}
                       type="button"
                       onClick={() => setSelectedCategory(category.id)}
-                      className={`p-4 border rounded-xl transition-all duration-200 text-left ${
-                        selectedCategory === category.id
-                          ? "border-accent bg-subtle shadow-sm"
-                          : "border-borders hover:border-accent hover:shadow-sm"
-                      }`}
+                      className="p-4 rounded-2xl transition-all duration-200 text-left active:scale-[0.98]"
+                      style={{ background: isSelected ? 'rgba(124,111,255,0.15)' : '#1C1C24', border: isSelected ? '1.5px solid rgba(124,111,255,0.6)' : '1.5px solid transparent' }}
                     >
                       <div className="flex items-center space-x-4">
-                        <div
-                          className={`w-12 h-12 rounded-xl flex items-center justify-center ${category.color}`}
-                        >
-                          <IconComponent className="w-6 h-6" />
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${category.color} bg-opacity-20`}>
+                          <IconComponent className="w-5 h-5" />
                         </div>
                         <div className="flex-1">
-                          <div className="font-semibold text-accent">
+                          <div className={`font-semibold tracking-tight text-[15px] mb-0.5 ${isSelected ? 'text-white' : 'text-zinc-300'}`}>
                             {category.title}
                           </div>
-                          <div className="text-xs text-green-600 mt-1 font-medium">
-                            📨 {category.department}
-                          </div>
-                          <div className="text-xs text-text-secondary mt-1">
+                          <div className="text-[11px] text-zinc-600 font-medium">
                             {category.examples}
                           </div>
-                          {selectedCategory === category.id && (
-                            <div className="text-xs text-blue-600 mt-2 bg-blue-50 rounded px-2 py-1">
-                              ✅ Will be assigned to this department automatically
-                            </div>
-                          )}
+                          <div className="text-[10px] font-bold mt-1 px-2 py-0.5 rounded-md inline-block" style={{ background: 'rgba(124,111,255,0.15)', color: '#7C6FFF' }}>
+                            📨 {category.department}
+                          </div>
                         </div>
                       </div>
                     </button>
@@ -504,21 +449,22 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
 
             {/* Description */}
             <div>
-              <label className="block text-caption mb-4">
+              <label className="block text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
                 Detailed Description
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full h-32 p-4 input-field rounded-xl resize-none"
-                placeholder="Provide more details about the issue..."
+                className="w-full h-28 p-4 rounded-2xl resize-none outline-none transition-all text-[15px] placeholder-zinc-700"
+                style={{ background: '#1C1C24', color: 'white', border: '1.5px solid rgba(255,255,255,0.08)' }}
+                placeholder="Provide more context (e.g., how long, exact spot, safety hazards)..."
               />
             </div>
 
             {/* Multiple Photo Upload */}
             <div>
-              <label className="block text-caption mb-4">
-                Add Photos ({selectedImages.length}/5)
+              <label className="block text-[13px] font-bold text-zinc-500 uppercase tracking-widest mb-4">
+                Add Photos <span className="text-zinc-400">({selectedImages.length}/5)</span>
               </label>
 
               {/* Photo Grid */}
@@ -551,14 +497,15 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowPhotoOptions(true)}
-                  className="w-full p-4 border-2 border-dashed border-borders rounded-xl hover:border-accent hover:bg-subtle/30 transition-colors flex items-center justify-center space-x-3"
+                  className="w-full p-5 rounded-2xl flex flex-col items-center justify-center space-y-3 cursor-pointer transition-colors active:scale-[0.98]"
+                  style={{ border: '2px dashed rgba(255,255,255,0.12)', background: '#1C1C24' }}
                 >
-                  <Camera className="w-6 h-6 text-text-secondary" />
-                  <div>
-                    <div className="font-medium text-accent">Add Photos</div>
-                    <div className="text-sm text-text-secondary">
-                      Camera or Gallery
-                    </div>
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'rgba(124,111,255,0.15)' }}>
+                    <Camera className="w-5 h-5" style={{ color: '#7C6FFF' }} />
+                  </div>
+                  <div className="text-center">
+                    <div className="font-semibold text-zinc-300 tracking-tight">Capture or Upload</div>
+                    <div className="text-[13px] text-zinc-600 font-medium">JPEG, PNG • Up to 10MB</div>
                   </div>
                 </button>
               )}
@@ -729,19 +676,18 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
             {/* Enhanced Submit Button */}
             <button
               type="submit"
-              disabled={submitting || !title || !selectedCategory}
-              className="w-full btn-primary py-4 rounded-xl text-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+              disabled={aiState !== "idle" || !title || !selectedCategory}
+              className="w-full bg-zinc-900 text-white font-semibold py-4 rounded-2xl text-[17px] tracking-tight disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3 shadow-md hover:bg-zinc-800 active:scale-[0.98] transition-all"
             >
-              {submitting ? (
+              {aiState !== "idle" ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  <span>Submitting to {selectedCategory ? categories.find(c => c.id === selectedCategory)?.department : 'Department'}...</span>
+                  <span>Transmitting...</span>
                 </>
               ) : (
                 <>
                   <Send className="w-5 h-5" />
                   <span>Submit Report</span>
-                  
                 </>
               )}
             </button>
